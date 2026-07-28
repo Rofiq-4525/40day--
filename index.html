@@ -5,9 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>40day — তাকবীরে ঊলা ট্র্যাকার</title>
-<link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#146450">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -344,6 +345,34 @@
   .modal-btn.primary:active{ background:var(--teal-deep); }
   .modal-btn.secondary{ background:var(--surface-alt); color:var(--ink); }
 
+  .google-btn{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    padding:12px; border:1.5px solid var(--line); border-radius:14px;
+    background:var(--surface); color:var(--ink); font-weight:600; font-size:0.9rem;
+    cursor:pointer; font-family:'Noto Sans Bengali', sans-serif;
+    transition:background .15s ease, transform .1s ease; margin-bottom:14px;
+  }
+  .google-btn:active{ background:var(--surface-alt); transform:scale(0.98); }
+  .divider{ display:flex; align-items:center; gap:10px; margin:4px 0 14px; color:var(--ink-soft); font-size:0.78rem; }
+  .divider::before, .divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .link-btn{
+    width:100%; background:none; border:none; color:var(--teal-deep); font-weight:600;
+    font-size:0.85rem; padding:10px; cursor:pointer; margin-top:4px; font-family:'Noto Sans Bengali', sans-serif;
+  }
+
+  .leaderboard-section{ margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+  .leaderboard-title{ font-size:0.85rem; font-weight:700; color:var(--ink); margin-bottom:10px; }
+  .leaderboard-list{ display:flex; flex-direction:column; gap:8px; }
+  .leaderboard-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface-alt); border-radius:12px; padding:10px 12px;
+  }
+  .leaderboard-row.me{ background:var(--teal-soft); border:1.5px solid var(--teal); }
+  .lb-rank{ font-weight:700; color:var(--teal-deep); width:22px; flex-shrink:0; font-size:0.85rem; }
+  .lb-name{ flex:1; font-size:0.85rem; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-score{ font-weight:700; color:var(--accent); font-size:0.9rem; }
+  .leaderboard-empty{ font-size:0.8rem; color:var(--ink-soft); text-align:center; padding:10px; }
+
   .progress-item{ padding:14px 16px; margin-bottom:10px; background:var(--surface-alt); border-radius:16px; border-left:4px solid var(--teal); }
   .progress-label{ font-size:0.85rem; font-weight:600; color:var(--ink); }
   .progress-value{ font-size:1.1rem; font-weight:700; color:var(--teal-deep); margin-top:4px; }
@@ -394,7 +423,7 @@
 
   <header>
     <button class="icon-btn" id="menuBtn" aria-label="মেনু"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
-    <div class="brand"><img src="logo-header.png" alt="40day"></div>
+    <div class="brand"><img src="Logo.png.png" alt="40day"></div>
     <div class="user-info" id="userInfo">
       <div class="user-name" id="userName"></div>
     </div>
@@ -468,7 +497,7 @@
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="drawer" id="drawer">
     <div class="drawer-header">
-      <div class="brand"><img src="logo-header.png" alt="40day"></div>
+      <div class="brand"><img src="Logo.png.png" alt="40day"></div>
     </div>
     <div class="drawer-body">
       <div class="drawer-legend">
@@ -504,6 +533,12 @@
           <div class="progress-value" id="completionCount">০ বার</div>
         </div>
       </div>
+      <div class="leaderboard-section">
+        <div class="leaderboard-title">লিডারবোর্ড — প্রচেষ্টা সংখ্যা অনুযায়ী</div>
+        <div id="leaderboardList" class="leaderboard-list">
+          <div class="leaderboard-empty">লগইন করলে লিডারবোর্ড দেখা যাবে</div>
+        </div>
+      </div>
       <button class="progress-close-btn" onclick="closeProgressModal()">বন্ধ করুন</button>
     </div>
   </div>
@@ -512,14 +547,21 @@
   <div class="sheet-overlay" id="loginModal">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <div class="sheet-title">লগইন করুন</div>
-      <input type="text" class="modal-input" id="nameInput" placeholder="আপনার নাম" />
-      <input type="text" class="modal-input" id="loginInput" placeholder="ইমেইল বা মোবাইল নাম্বার" />
+      <div class="sheet-title" id="loginTitle">লগইন করুন</div>
+      <button class="google-btn" id="googleSignInBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 6 29.6 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.5 34.9 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-2.9 5.2-5.4 6.8l6.5 5.5C39.9 37.5 44 31.8 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        Google দিয়ে চালিয়ে যান
+      </button>
+      <div class="divider"><span>অথবা</span></div>
+      <input type="text" class="modal-input" id="nameInput" placeholder="আপনার নাম" style="display:none;" />
+      <input type="email" class="modal-input" id="loginInput" placeholder="ইমেইল" />
+      <input type="password" class="modal-input" id="passwordInput" placeholder="পাসওয়ার্ড" />
       <div class="modal-error" id="errorMsg"></div>
       <div class="modal-buttons">
-        <button class="modal-btn primary" onclick="submitLogin()">লগইন</button>
+        <button class="modal-btn primary" id="submitLoginBtn" onclick="submitLogin()">লগইন</button>
         <button class="modal-btn secondary" onclick="closeLoginModal()">বাতিল</button>
       </div>
+      <button class="link-btn" id="toggleModeBtn" onclick="toggleAuthMode()">নতুন অ্যাকাউন্ট খুলুন</button>
     </div>
   </div>
 
@@ -566,6 +608,7 @@
   }
   function saveWeekData(week, data){
     storage.setItem(storageKey(week), JSON.stringify(data));
+    schedulePush();
   }
   function cycleState(state){
     if(state === "check") return "cross";
@@ -616,6 +659,102 @@
     }
     return { streak, attempts, best, completions };
   }
+
+  // ---- Cloud sync (Firebase) ----
+  let cloudUser = null;
+  let applyingRemoteUpdate = false;
+  let pushTimer = null;
+
+  function schedulePush(){
+    if(!cloudUser || applyingRemoteUpdate || !window.firebaseApi) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushToCloud, 700);
+  }
+
+  function pushToCloud(){
+    if(!cloudUser || !window.firebaseApi) return;
+    const weeks = {};
+    const maxWeek = getMaxStoredWeek();
+    for(let w = 1; w <= maxWeek; w++){ weeks[w] = loadWeekData(w); }
+    const { attempts, best, completions, streak } = computeProgress();
+    const name = cloudUser.displayName || (cloudUser.email ? cloudUser.email.split('@')[0] : 'ব্যবহারকারী');
+    window.firebaseApi.pushUserData(cloudUser.uid, { name, weeks });
+    window.firebaseApi.pushLeaderboard(cloudUser.uid, { name, attempts, best, completions, streak });
+  }
+
+  function applyRemoteUserData(data){
+    if(!data || !data.weeks) return;
+    applyingRemoteUpdate = true;
+    Object.keys(data.weeks).forEach(w => {
+      storage.setItem(storageKey(w), JSON.stringify(data.weeks[w]));
+    });
+    applyingRemoteUpdate = false;
+    render();
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function renderLeaderboard(list){
+    const container = document.getElementById('leaderboardList');
+    if(!container) return;
+    if(!list || list.length === 0){
+      container.innerHTML = '<div class="leaderboard-empty">এখনো কেউ নেই</div>';
+      return;
+    }
+    const sorted = [...list].sort((a, b) => (b.attempts || 0) - (a.attempts || 0));
+    container.innerHTML = sorted.map((entry, idx) => {
+      const isMe = cloudUser && entry.uid === cloudUser.uid;
+      return '<div class="leaderboard-row' + (isMe ? ' me' : '') + '">' +
+        '<span class="lb-rank">' + toBn(idx + 1) + '</span>' +
+        '<span class="lb-name">' + escapeHtml(entry.name || 'নাম নেই') + '</span>' +
+        '<span class="lb-score">' + toBn(entry.attempts || 0) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function translateFirebaseError(code){
+    const map = {
+      'auth/invalid-email': 'ইমেইল সঠিক নয়',
+      'auth/user-not-found': 'এই ইমেইলে কোনো অ্যাকাউন্ট নেই',
+      'auth/wrong-password': 'পাসওয়ার্ড ভুল',
+      'auth/invalid-credential': 'ইমেইল বা পাসওয়ার্ড ভুল',
+      'auth/email-already-in-use': 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট আছে',
+      'auth/weak-password': 'পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হতে হবে',
+      'auth/popup-closed-by-user': 'পপআপ বন্ধ হয়ে গেছে, আবার চেষ্টা করুন',
+      'auth/network-request-failed': 'ইন্টারনেট সংযোগ চেক করুন',
+      'auth/missing-password': 'পাসওয়ার্ড দিন'
+    };
+    return map[code] || 'কিছু একটা ভুল হয়েছে, আবার চেষ্টা করুন';
+  }
+
+  function handleAuthChange(user){
+    if(user){
+      cloudUser = user;
+      const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'ব্যবহারকারী');
+      storage.setItem('muhasaba_user', JSON.stringify({ name: displayName, contact: user.email || '' }));
+      if(window.firebaseApi){
+        window.firebaseApi.subscribeUserDoc(user.uid, applyRemoteUserData);
+        window.firebaseApi.subscribeLeaderboard(renderLeaderboard);
+      }
+    } else {
+      cloudUser = null;
+      if(window.firebaseApi) window.firebaseApi.unsubscribeAll();
+      storage.removeItem('muhasaba_user');
+      const container = document.getElementById('leaderboardList');
+      if(container) container.innerHTML = '<div class="leaderboard-empty">লগইন করলে লিডারবোর্ড দেখা যাবে</div>';
+    }
+    updateUIByLoginStatus();
+    render();
+  }
+
+  window.addEventListener('firebase-ready', () => {
+    if(window.firebaseApi) window.firebaseApi.onAuthChange(handleAuthChange);
+  });
+
 
   function updateCompletionBadge(completions){
     const badge = document.getElementById('completionBadge');
@@ -713,6 +852,7 @@
   function resetWeek(){
     if(confirm("এই সপ্তাহের সব ডেটা মুছে ফেলতে চান?")){
       storage.removeItem(storageKey(currentWeek));
+      schedulePush();
       render();
       closeDrawer();
     }
@@ -772,6 +912,7 @@
   const loginModal = document.getElementById('loginModal');
   const nameInput = document.getElementById('nameInput');
   const loginInput = document.getElementById('loginInput');
+  const passwordInput = document.getElementById('passwordInput');
   const errorMsg = document.getElementById('errorMsg');
   const userInfo = document.getElementById('userInfo');
   const userName = document.getElementById('userName');
@@ -779,6 +920,7 @@
   const dashboardGreeting = document.getElementById('dashboardGreeting');
   const loginBtn = document.getElementById('loginBtn');
   const menuLogoutBtn = document.getElementById('menuLogoutBtn');
+  let isSignupMode = false;
 
   function isLoggedIn(){
     return storage.getItem('muhasaba_user') !== null;
@@ -833,9 +975,15 @@
   function openLoginModal(){
     loginModal.classList.add('open');
     errorMsg.textContent = '';
+    isSignupMode = false;
     nameInput.value = '';
     loginInput.value = '';
-    setTimeout(() => nameInput.focus(), 200);
+    passwordInput.value = '';
+    nameInput.style.display = 'none';
+    document.getElementById('submitLoginBtn').textContent = 'লগইন';
+    document.getElementById('loginTitle').textContent = 'লগইন করুন';
+    document.getElementById('toggleModeBtn').textContent = 'নতুন অ্যাকাউন্ট খুলুন';
+    setTimeout(() => loginInput.focus(), 200);
   }
 
   loginBtn.addEventListener('click', openLoginModal);
@@ -843,10 +991,13 @@
 
   function handleLogout(){
     if(confirm('আপনি কি লগআউট করতে চান?')){
-      storage.removeItem('muhasaba_user');
-      updateUIByLoginStatus();
+      if(window.firebaseApi){
+        window.firebaseApi.signOutUser();
+      } else {
+        storage.removeItem('muhasaba_user');
+        updateUIByLoginStatus();
+      }
       closeDrawer();
-      alert('আপনি লগআউট করেছেন');
     }
   }
 
@@ -855,51 +1006,142 @@
     setActiveNav(navHome);
   }
 
-  function isValidEmail(email){
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  function toggleAuthMode(){
+    isSignupMode = !isSignupMode;
+    errorMsg.textContent = '';
+    nameInput.style.display = isSignupMode ? 'block' : 'none';
+    document.getElementById('submitLoginBtn').textContent = isSignupMode ? 'অ্যাকাউন্ট খুলুন' : 'লগইন';
+    document.getElementById('loginTitle').textContent = isSignupMode ? 'নতুন অ্যাকাউন্ট' : 'লগইন করুন';
+    document.getElementById('toggleModeBtn').textContent = isSignupMode ? 'আগের অ্যাকাউন্টে লগইন করুন' : 'নতুন অ্যাকাউন্ট খুলুন';
   }
 
-  function isValidPhone(phone){
-    return /^[০-৯0-9]{10,15}$/.test(phone.replace(/[\s-]/g, ''));
-  }
-
-  function submitLogin(){
+  async function submitLogin(){
+    const email = loginInput.value.trim();
+    const password = passwordInput.value.trim();
     const name = nameInput.value.trim();
-    const input = loginInput.value.trim();
+    errorMsg.textContent = '';
 
-    if(!name){
+    if(!window.firebaseApi){
+      errorMsg.textContent = 'সিস্টেম এখনো প্রস্তুত হয়নি, একটু পর আবার চেষ্টা করুন';
+      return;
+    }
+    if(!email || !password){
+      errorMsg.textContent = 'ইমেইল ও পাসওয়ার্ড দিন';
+      return;
+    }
+    if(isSignupMode && !name){
       errorMsg.textContent = 'নাম প্রবেশ করুন';
       return;
     }
-    if(!input){
-      errorMsg.textContent = 'ইমেইল বা মোবাইল নাম্বার প্রবেশ করুন';
-      return;
-    }
-    if(isValidEmail(input) || isValidPhone(input)){
-      storage.setItem('muhasaba_user', JSON.stringify({name: name, contact: input}));
-      alert('সালাম ' + name + '! আপনি সফলভাবে লগইন করেছেন');
+
+    const btn = document.getElementById('submitLoginBtn');
+    btn.disabled = true;
+    try {
+      if(isSignupMode){
+        await window.firebaseApi.signUpEmail(email, password, name);
+      } else {
+        await window.firebaseApi.signInEmail(email, password);
+      }
       closeLoginModal();
-      updateUIByLoginStatus();
-    } else {
-      errorMsg.textContent = 'সঠিক ইমেইল বা মোবাইল নাম্বার দিন';
+    } catch(e){
+      errorMsg.textContent = translateFirebaseError(e.code);
+    } finally {
+      btn.disabled = false;
     }
   }
+
+  document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+    errorMsg.textContent = '';
+    if(!window.firebaseApi){
+      errorMsg.textContent = 'সিস্টেম এখনো প্রস্তুত হয়নি, একটু পর আবার চেষ্টা করুন';
+      return;
+    }
+    try {
+      await window.firebaseApi.signInGoogle();
+      closeLoginModal();
+    } catch(e){
+      errorMsg.textContent = translateFirebaseError(e.code);
+    }
+  });
 
   loginInput.addEventListener('keypress', (e) => {
     if(e.key === 'Enter') submitLogin();
   });
+  passwordInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') submitLogin();
+  });
 
-  // Check login status on page load
+  // Initial render (guest/local view). Firebase auth state (if configured)
+  // will call handleAuthChange once the module script below is ready.
   updateUIByLoginStatus();
   render();
+</script>
 
-  // Register the service worker for offline support (required for PWABuilder/APK)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch((err) => {
-        console.warn('Service worker registration failed:', err);
-      });
-    });
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    updateProfile, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB4A894MeIadU_xM-CIMKqMwjqCYZIuD8Q",
+    authDomain: "day-9c133.firebaseapp.com",
+    projectId: "day-9c133",
+    storageBucket: "day-9c133.firebasestorage.app",
+    messagingSenderId: "805399331787",
+    appId: "1:805399331787:web:8454840aa3230beaacac4e"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let unsubUser = null;
+    let unsubBoard = null;
+
+    window.firebaseApi = {
+      onAuthChange(cb){ onAuthStateChanged(auth, cb); },
+      signInGoogle(){ return signInWithPopup(auth, new GoogleAuthProvider()); },
+      signInEmail(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
+      async signUpEmail(email, pass, name){
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        if(name) await updateProfile(cred.user, { displayName: name });
+        return cred;
+      },
+      signOutUser(){ return signOut(auth); },
+      pushUserData(uid, payload){
+        return setDoc(doc(db, 'users', uid), Object.assign({}, payload, { updatedAt: serverTimestamp() }), { merge: true });
+      },
+      pushLeaderboard(uid, payload){
+        return setDoc(doc(db, 'leaderboard', uid), Object.assign({}, payload, { updatedAt: serverTimestamp() }), { merge: true });
+      },
+      subscribeUserDoc(uid, cb){
+        if(unsubUser) unsubUser();
+        unsubUser = onSnapshot(doc(db, 'users', uid), (snap) => cb(snap.exists() ? snap.data() : null));
+      },
+      subscribeLeaderboard(cb){
+        if(unsubBoard) unsubBoard();
+        unsubBoard = onSnapshot(collection(db, 'leaderboard'), (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push(Object.assign({ uid: d.id }, d.data())));
+          cb(list);
+        });
+      },
+      unsubscribeAll(){
+        if(unsubUser){ unsubUser(); unsubUser = null; }
+        if(unsubBoard){ unsubBoard(); unsubBoard = null; }
+      }
+    };
+
+    window.dispatchEvent(new Event('firebase-ready'));
+  } catch (e) {
+    console.error('Firebase init failed, continuing in guest/local mode.', e);
   }
 </script>
 
