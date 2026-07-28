@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.vercel.app_40day.twa",
-        "sha256_cert_fingerprints": ["18:25:99:36:27:9C:95:E6:81:E6:1C:A1:F3:96:BE:06:60:EA:94:F9:43:84:4B:03:D8:16:32:34:D7:71:35:53"]
+        "package_name": "app.vercel.app_40day_ext8.twa",
+        "sha256_cert_fingerprints": ["71:62:34:FD:35:8C:12:0F:47:6B:0F:75:BB:35:29:E1:F8:C7:21:55:80:68:66:B5:30:27:72:09:6E:2E:01:59"]
       }
     }]
