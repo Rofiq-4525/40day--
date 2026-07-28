@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>40day — তাকবীরে ঊলা ট্র্যাকার</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#146450">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F4EF;
+    --surface:#FFFFFF;
+    --surface-alt:#EFEDE5;
+    --ink:#1B2E2A;
+    --ink-soft:#66756F;
+    --teal:#1F8A6F;
+    --teal-deep:#146450;
+    --teal-soft:#E4F2ED;
+    --accent:#B8863B;
+    --accent-soft:#F3E9D6;
+    --success:#2F6F52;
+    --success-soft:#DEEBE4;
+    --danger:#A6493F;
+    --danger-soft:#F4E2DF;
+    --line:#E3DFD3;
+    --radius:20px;
+    --radius-sm:14px;
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --shadow-sm: 0 1px 2px rgba(27,46,42,0.06), 0 1px 1px rgba(27,46,42,0.04);
+    --shadow-md: 0 6px 18px rgba(27,46,42,0.08), 0 2px 6px rgba(27,46,42,0.05);
+    --shadow-lg: 0 -8px 28px rgba(27,46,42,0.16);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html{ background:var(--teal-deep); }
+  body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans Bengali', sans-serif;
+    overscroll-behavior-y:none;
+  }
+  .app{
+    max-width:640px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--bg);
+    position:relative;
+    box-shadow:0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* Status-bar strip (fake native feel) */
+  .statusbar-fill{
+    height:var(--sat);
+    background:var(--teal-deep);
+    width:100%;
+  }
+
+  /* Header */
+  header{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+    padding:12px 16px;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    border-radius:0 0 18px 18px;
+    box-shadow:var(--shadow-sm);
+  }
+  .icon-btn{
+    width:40px; height:40px;
+    border-radius:50%;
+    border:none;
+    background:var(--surface-alt);
+    color:var(--teal-deep);
+    font-size:1.15rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+    flex-shrink:0;
+    position:relative;
+  }
+  .icon-btn:active{ transform:scale(0.88); background:var(--accent-soft); }
+  .brand img{ height:34px; width:auto; display:block; transform:scale(1.4); }
+
+  .completion-badge{
+    position:absolute;
+    top:-3px; right:-3px;
+    min-width:18px; height:18px;
+    padding:0 4px;
+    border-radius:9px;
+    background:var(--accent);
+    color:white;
+    font-size:0.62rem;
+    font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 4px rgba(184,134,59,0.5);
+    border:2px solid var(--surface);
+  }
+
+  .content{ padding:16px 14px 100px; }
+
+  /* Hadith box (full text, always visible) */
+  .hadith-box{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:16px;
+    font-size:0.85rem;
+    color:var(--ink);
+    line-height:1.65;
+    text-align:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .hadith-box .full{ color:var(--ink); }
+  .hadith-box .ref-src{ font-size:0.72rem; color:var(--teal-deep); margin-top:6px; text-align:center; }
+
+  /* Counter row: main pill + best-streak badge */
+  .counter-row{ position:relative; margin:0 auto 14px; max-width:300px; }
+  .counter-pill{
+    background:linear-gradient(160deg, var(--teal) 0%, var(--teal-deep) 100%);
+    border:none;
+    border-radius:18px;
+    padding:16px 20px 14px;
+    text-align:center;
+    position:relative;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    box-shadow:0 8px 18px rgba(20,100,80,0.26), 0 2px 6px rgba(20,100,80,0.16);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .counter-pill:active{ transform:scale(0.98); box-shadow:0 5px 12px rgba(20,100,80,0.22); }
+  .counter-pill .counter-label{ font-size:0.72rem; color:rgba(255,255,255,0.8); font-weight:600; width:100%; margin-bottom:2px; }
+  .counter-pill .fraction{ font-size:1.9rem; font-weight:700; color:white; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .counter-pill .attempt-label{ font-size:0.78rem; color:rgba(255,255,255,0.9); font-weight:700; }
+  .track{ height:5px; border-radius:6px; background:rgba(255,255,255,0.2); margin:6px auto 0; max-width:380px; overflow:hidden; width:100%; }
+  .track-fill{ height:100%; background:rgba(255,255,255,0.7); border-radius:6px; transition:width .35s ease; }
+  .counter-pill.complete{ background:linear-gradient(160deg, var(--accent) 0%, #96652f 100%); box-shadow:0 10px 24px rgba(150,101,47,0.3); }
+  .counter-pill.complete:active{ box-shadow:0 6px 16px rgba(150,101,47,0.24); }
+  .counter-pill.complete .fraction{ color:white; }
+  .counter-pill.complete .track-fill{ background:rgba(255,255,255,0.7); }
+  .counter-pill.complete .attempt-label{ color:rgba(255,255,255,0.95); }
+
+  .best-badge{
+    position:absolute;
+    top:-10px; right:12px;
+    background:var(--surface);
+    border:1.5px solid var(--teal);
+    border-radius:40px;
+    padding:5px 11px;
+    text-align:center;
+    line-height:1.2;
+    box-shadow:var(--shadow-md);
+  }
+  .best-badge .lbl{ font-size:0.58rem; color:var(--teal-deep); font-weight:600; }
+  .best-badge .val{ font-size:0.8rem; color:var(--teal-deep); font-weight:700; }
+
+  /* Day-range bar */
+  .range-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:6px 10px;
+    margin:0 auto 10px;
+    max-width:260px;
+    box-shadow:var(--shadow-sm);
+  }
+  .range-bar button{
+    width:26px; height:26px;
+    border-radius:50%;
+    border:none;
+    background:var(--surface-alt);
+    color:var(--ink);
+    font-size:0.95rem;
+    cursor:pointer;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .range-bar button:active{ transform:scale(0.88); background:var(--teal-soft); }
+  .range-bar .range-label{ text-align:center; flex:1; font-size:0.8rem; font-weight:600; color:var(--ink); }
+
+  /* Table card */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:6px 2px;
+    margin-bottom:16px;
+    overflow-x:auto;
+    box-shadow:var(--shadow-sm);
+  }
+  table{ width:100%; table-layout:fixed; border-collapse:collapse; }
+  th{ font-size:0.75rem; font-weight:700; color:var(--ink-soft); padding:4px 0px 6px; text-align:center; border-bottom:1px solid var(--line); }
+  th.day-col{ text-align:left; padding-left:8px; width:19%; }
+  td{ text-align:center; padding:4px 0px; border-bottom:1px solid var(--line); }
+  tr:last-child td{ border-bottom:none; }
+  td.day-name{ text-align:left; padding-left:8px; font-weight:600; font-size:0.7rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dot{
+    width:24px; height:24px; border-radius:8px;
+    border:1.5px solid var(--line); background:var(--surface-alt);
+    margin:0 auto; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.8rem; font-weight:700; color:transparent; user-select:none;
+    transition:transform .1s ease, background .15s ease, border-color .15s ease;
+  }
+  .dot:active{ transform:scale(0.82); }
+  .dot.checked{ background:var(--success); border-color:var(--success); color:white; }
+  .dot.crossed{ background:var(--danger); border-color:var(--danger); color:white; }
+
+  /* Bottom Navigation Bar (app-like) */
+  .bottom-nav{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:30;
+    max-width:640px;
+    margin:0 auto;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -6px 20px rgba(27,46,42,0.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    padding:8px 8px calc(8px + var(--sab));
+  }
+  .nav-item{
+    background:none; border:none;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--ink-soft);
+    font-family:'Noto Sans Bengali', sans-serif;
+    font-size:0.68rem; font-weight:600;
+    padding:6px 14px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .nav-item .nav-icon{ font-size:1.25rem; line-height:1; position:relative; display:inline-block; }
+  .nav-item:active{ transform:scale(0.9); }
+  .nav-item.active{ color:var(--teal-deep); background:var(--teal-soft); }
+  .nav-badge{
+    position:absolute;
+    top:-6px; right:-9px;
+    min-width:16px; height:16px;
+    padding:0 3px;
+    border-radius:8px;
+    background:var(--accent);
+    color:white;
+    font-size:0.56rem;
+    font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 3px rgba(184,134,59,0.5);
+    border:1.5px solid var(--surface);
+  }
+
+  /* Drawer menu (slide from left) */
+  .drawer-overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(15,25,22,0.45);
+    z-index:90;
+  }
+  .drawer-overlay.open{ display:block; animation:fadeIn .18s ease; }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .drawer{
+    position:fixed;
+    top:0; left:0; bottom:0;
+    width:78%; max-width:300px;
+    background:var(--surface);
+    z-index:91;
+    transform:translateX(-100%);
+    transition:transform .25s cubic-bezier(.2,.9,.3,1);
+    box-shadow:8px 0 30px rgba(0,0,0,0.15);
+    display:flex; flex-direction:column;
+    padding-top:calc(20px + var(--sat));
+  }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-header{ padding:0 20px 18px; border-bottom:1px solid var(--line); }
+  .drawer-header .brand img{ height:32px; transform:scale(1.4); transform-origin:left; }
+  .drawer-body{ padding:16px 20px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .drawer-legend{ display:flex; flex-direction:column; gap:10px; font-size:0.82rem; color:var(--ink-soft); padding:8px 4px 16px; border-bottom:1px solid var(--line); margin-bottom:8px; }
+  .drawer-legend span{ display:flex; align-items:center; gap:8px; }
+  .swatch{ width:16px; height:16px; border-radius:5px; display:inline-block; }
+  .swatch.ok{ background:var(--success); }
+  .swatch.no{ background:var(--danger); }
+  .drawer-btn{
+    display:flex; align-items:center; gap:12px;
+    border:none; background:none;
+    padding:12px 8px;
+    font-size:0.9rem; font-weight:600; color:var(--ink);
+    border-radius:12px;
+    cursor:pointer;
+    text-align:left;
+    font-family:'Noto Sans Bengali', sans-serif;
+    transition:background .15s ease;
+  }
+  .drawer-btn:active{ background:var(--surface-alt); }
+  .drawer-btn.danger{ color:var(--danger); }
+  .drawer-btn .di{ font-size:1.1rem; width:22px; text-align:center; }
+
+  /* Bottom Sheets (Login / Progress) */
+  .sheet-overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(15,25,22,0.45);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .sheet-overlay.open{ display:flex; animation:fadeIn .18s ease; }
+  .sheet{
+    width:100%; max-width:640px;
+    background:var(--surface);
+    border-radius:24px 24px 0 0;
+    padding:10px 22px calc(24px + var(--sab));
+    box-shadow:var(--shadow-lg);
+    transform:translateY(0);
+    animation:slideUp .25s cubic-bezier(.2,.9,.3,1);
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  @keyframes slideUp{ from{ transform:translateY(100%);} to{ transform:translateY(0);} }
+  .sheet-handle{ width:40px; height:5px; background:var(--line); border-radius:4px; margin:8px auto 14px; }
+  .sheet-title{ font-size:1.1rem; font-weight:700; color:var(--ink); margin-bottom:16px; text-align:center; }
+
+  .modal-input{ width:100%; padding:13px 14px; margin-bottom:12px; border:1.5px solid var(--line); border-radius:12px; font-size:0.95rem; font-family:'Noto Sans Bengali', sans-serif; color:var(--ink); background:var(--surface-alt); }
+  .modal-input:focus{ outline:none; border-color:var(--teal); background:var(--surface); }
+  .modal-error{ color:var(--danger); font-size:0.8rem; margin-bottom:12px; text-align:center; }
+  .modal-buttons{ display:flex; gap:10px; margin-top:4px; }
+  .modal-btn{ flex:1; padding:13px; border:none; border-radius:14px; font-weight:700; cursor:pointer; font-size:0.92rem; transition:background .15s ease, transform .1s ease; font-family:'Noto Sans Bengali', sans-serif; }
+  .modal-btn:active{ transform:scale(0.97); }
+  .modal-btn.primary{ background:var(--teal); color:white; }
+  .modal-btn.primary:active{ background:var(--teal-deep); }
+  .modal-btn.secondary{ background:var(--surface-alt); color:var(--ink); }
+
+  .progress-item{ padding:14px 16px; margin-bottom:10px; background:var(--surface-alt); border-radius:16px; border-left:4px solid var(--teal); }
+  .progress-label{ font-size:0.85rem; font-weight:600; color:var(--ink); }
+  .progress-value{ font-size:1.1rem; font-weight:700; color:var(--teal-deep); margin-top:4px; }
+  .progress-close-btn{ width:100%; padding:13px; background:var(--teal); color:white; border:none; border-radius:14px; font-weight:700; cursor:pointer; margin-top:8px; transition:background .15s ease, transform .1s ease; font-family:'Noto Sans Bengali', sans-serif; }
+  .progress-close-btn:active{ background:var(--teal-deep); transform:scale(0.97); }
+
+  /* Footer */
+  footer{
+    border-top:1px solid var(--line);
+    margin-top:8px;
+    padding:20px 20px 26px;
+  }
+  .foot-links{ display:flex; justify-content:space-between; margin-bottom:14px; }
+  .foot-col{ display:flex; flex-direction:column; gap:6px; }
+  .foot-col.right{ text-align:right; }
+  .foot-col a{ color:var(--ink-soft); font-size:0.82rem; text-decoration:underline; }
+  .foot-tag{ text-align:center; font-size:0.8rem; color:var(--teal-deep); font-weight:600; letter-spacing:0.02em; }
+  .foot-tag .reg{ font-size:0.6rem; vertical-align:super; }
+
+  /* User Info & Dashboard */
+  .user-info{ display:none; flex:1; text-align:center; padding:0 10px; }
+  .user-info.show{ display:block; }
+  .user-name{ font-size:0.92rem; font-weight:700; color:var(--ink); }
+  .dashboard-section{ display:none; position:relative; background:var(--accent-soft); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:10px; text-align:center; box-shadow:var(--shadow-sm); }
+  .dashboard-section.show{ display:block; }
+  .dashboard-greeting{ font-size:0.95rem; font-weight:700; color:var(--accent); margin-bottom:4px; }
+  .dashboard-info{ font-size:0.75rem; color:var(--ink-soft); }
+  .dashboard-close{ position:absolute; top:10px; right:10px; background:none; border:none; color:var(--accent); font-size:1.2rem; cursor:pointer; padding:0; width:24px; height:24px; display:flex; align-items:center; justify-content:center; transition:color .15s ease; }
+  .dashboard-close:hover{ color:var(--ink); }
+
+  @media (max-width:380px){
+    .counter-pill .fraction{ font-size:2rem; }
+  }
+
+  /* Monochrome icon set */
+  .icon{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+  .nav-icon .icon{ width:22px; height:22px; margin:0 auto; }
+  .di .icon{ width:19px; height:19px; }
+  .range-bar button .icon{ width:17px; height:17px; margin:0 auto; }
+  .dashboard-close .icon{ width:16px; height:16px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="statusbar-fill"></div>
+
+  <header>
+    <button class="icon-btn" id="menuBtn" aria-label="মেনু"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+    <div class="brand"><img src="logo-header.png" alt="40day"></div>
+    <div class="user-info" id="userInfo">
+      <div class="user-name" id="userName"></div>
+    </div>
+    <button class="icon-btn" id="loginBtn" aria-label="লগইন"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4"/></svg><span class="completion-badge" id="completionBadge">০</span></button>
+  </header>
+
+  <div class="content">
+
+    <div class="counter-row">
+      <div class="counter-pill" id="counterCard">
+        <div class="counter-label">৪০ দিনের তাকবীরে ঊলা</div>
+        <div class="fraction" id="ringNum">০/৪০</div>
+        <div class="attempt-label" id="attemptLabel">১ম প্রচেষ্টা</div>
+        <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div></div>
+      </div>
+      <div class="best-badge">
+        <div class="lbl">সর্বোচ্চ</div>
+        <div class="val" id="bestStreak">০ দিন</div>
+      </div>
+    </div>
+
+    <div class="dashboard-section" id="dashboardSection">
+      <div class="dashboard-greeting" id="dashboardGreeting"></div>
+      <div class="dashboard-info">আপনার অগ্রগতি ট্র্যাক করুন এবং লক্ষ্য অর্জন করুন</div>
+      <button class="dashboard-close" id="dashboardCloseBtn" onclick="hideDashboard()"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
+    </div>
+
+    <div class="range-bar">
+      <button onclick="changeWeek(-1)" aria-label="আগের সপ্তাহ"><svg class="icon" viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"/></svg></button>
+      <div class="range-label" id="rangeLabel">সপ্তাহ ১ · দিন ১–৭</div>
+      <button onclick="changeWeek(1)" aria-label="পরের সপ্তাহ"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></button>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th class="day-col">দিন</th>
+            <th>ফজর</th>
+            <th>যোহর</th>
+            <th>আসর</th>
+            <th>মাগরিব</th>
+            <th>এশা</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="hadith-box" id="hadithBox">
+      <div class="full">"যে ব্যক্তি চল্লিশ দিন আল্লাহর সন্তুষ্টির উদ্দেশ্যে জামাআতের সাথে তাকবীরে ঊলা (প্রথম তাকবীর) পেয়ে সালাত আদায় করবে, তার জন্য দুটি মুক্তি লেখা হবে: জাহান্নাম থেকে মুক্তি এবং মুনাফিকী থেকে মুক্তি।"</div>
+      <div class="ref-src">সুনান আত-তিরমিযী: ২৪১; মুসনাদ আহমাদ: ১২৬০৯</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navHome">
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg><span class="nav-badge" id="bestStreakBadge">০</span></span>ট্র্যাকার
+    </button>
+    <button class="nav-item" id="navProgress">
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg><span class="nav-badge" id="attemptBadge">১</span></span>অগ্রগতি
+    </button>
+    <button class="nav-item" id="navProfile">
+      <span class="nav-icon"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6.4 7-6.4s7 2.8 7 6.4"/></svg><span class="nav-badge" id="navCompletionBadge">০</span></span>প্রোফাইল
+    </button>
+  </nav>
+
+  <!-- Drawer overlay + drawer -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="brand"><img src="logo-header.png" alt="40day"></div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-legend">
+        <span><i class="swatch ok"></i> জামাআতে প্রথম তাকবীর</span>
+        <span><i class="swatch no"></i> অন্যথায়</span>
+      </div>
+      <button class="drawer-btn" onclick="resetWeek()"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 2.6 6.3"/><polyline points="3 17 3 12 8 12"/></svg></span>এই সপ্তাহ রিসেট করুন</button>
+      <button class="drawer-btn" id="showDashboardBtn" onclick="showDashboard(); closeDrawer();" style="display:none;"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>সালাম দেখান</button>
+      <button class="drawer-btn danger" id="menuLogoutBtn" onclick="handleLogout()" style="display:none;"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>লগআউট</button>
+    </div>
+  </div>
+
+  <!-- Progress Bottom Sheet -->
+  <div class="sheet-overlay" id="progressModal">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">আপনার অগ্রগতি</div>
+      <div id="progressDetails">
+        <div class="progress-item">
+          <div class="progress-label">বর্তমান দিন</div>
+          <div class="progress-value" id="currentDays">০/৪০</div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">সর্বোচ্চ ধারাবাহিকতা</div>
+          <div class="progress-value" id="bestStreakDisplay">০ দিন</div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">প্রচেষ্টা সংখ্যা</div>
+          <div class="progress-value" id="attemptNumber">১</div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">৪০ দিন পূর্ণ হয়েছে</div>
+          <div class="progress-value" id="completionCount">০ বার</div>
+        </div>
+      </div>
+      <button class="progress-close-btn" onclick="closeProgressModal()">বন্ধ করুন</button>
+    </div>
+  </div>
+
+  <!-- Login Bottom Sheet -->
+  <div class="sheet-overlay" id="loginModal">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">লগইন করুন</div>
+      <input type="text" class="modal-input" id="nameInput" placeholder="আপনার নাম" />
+      <input type="text" class="modal-input" id="loginInput" placeholder="ইমেইল বা মোবাইল নাম্বার" />
+      <div class="modal-error" id="errorMsg"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn primary" onclick="submitLogin()">লগইন</button>
+        <button class="modal-btn secondary" onclick="closeLoginModal()">বাতিল</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Safe storage wrapper — some browsers block localStorage when a file is
+  // opened directly (file://) or in restricted/private contexts, which throws
+  // a SecurityError and stops the entire script from running (breaking every
+  // button, including the menu). This falls back to in-memory storage so the
+  // app keeps working either way.
+  const storage = (function(){
+    try {
+      const testKey = "__storage_test__";
+      window.localStorage.setItem(testKey, "1");
+      window.localStorage.removeItem(testKey);
+      return window.localStorage;
+    } catch(e) {
+      const mem = {};
+      return {
+        getItem: (k) => (k in mem ? mem[k] : null),
+        setItem: (k, v) => { mem[k] = String(v); },
+        removeItem: (k) => { delete mem[k]; },
+        key: (i) => Object.keys(mem)[i] || null,
+        get length(){ return Object.keys(mem).length; }
+      };
+    }
+  })();
+
+  const dayNames = ["শনি","রবি","সোম","মঙ্গল","বুধ","বৃহঃ","শুক্র"];
+  const prayers = [
+    { key:"fajr", label:"ফজর" },
+    { key:"zohr", label:"যোহর" },
+    { key:"asr", label:"আসর" },
+    { key:"maghrib", label:"মাগরিব" },
+    { key:"esha", label:"এশা" }
+  ];
+  let currentWeek = parseInt(storage.getItem('muhasaba_currentWeek') || "1");
+
+  function storageKey(week){ return 'muhasaba_week_' + week; }
+  function loadWeekData(week){
+    const raw = storage.getItem(storageKey(week));
+    return raw ? JSON.parse(raw) : {};
+  }
+  function saveWeekData(week, data){
+    storage.setItem(storageKey(week), JSON.stringify(data));
+  }
+  function cycleState(state){
+    if(state === "check") return "cross";
+    if(state === "cross") return "";
+    return "check";
+  }
+
+  function toBn(n){
+    const map = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
+    return String(n).split('').map(ch => map[ch] !== undefined ? map[ch] : ch).join('');
+  }
+  function ordinalBn(n){
+    const words = {1:"১ম",2:"২য়",3:"৩য়",4:"৪র্থ",5:"৫ম",6:"৬ষ্ঠ",7:"৭ম",8:"৮ম",9:"৯ম",10:"১০ম"};
+    if(words[n]) return words[n];
+    return toBn(n) + "তম";
+  }
+
+  function getMaxStoredWeek(){
+    let max = 1;
+    for(let i = 0; i < storage.length; i++){
+      const k = storage.key(i);
+      const m = k && k.match(/^muhasaba_week_(\d+)$/);
+      if(m){ max = Math.max(max, parseInt(m[1])); }
+    }
+    return Math.max(max, currentWeek);
+  }
+
+  // Walks every stored day chronologically across all weeks.
+  // A cross on any of the 5 fard prayers ends the current attempt (streak -> 0).
+  // A day with all 5 checked extends the streak. Also tracks the best streak ever
+  // reached, and how many times a full 40-day run has been completed.
+  function computeProgress(){
+    const maxWeek = getMaxStoredWeek();
+    let attempts = 1, streak = 0, best = 0, completions = 0;
+    for(let w = 1; w <= maxWeek; w++){
+      const data = loadWeekData(w);
+      for(let d = 0; d < dayNames.length; d++){
+        const states = prayers.map(p => data[d + "_" + p.key] || "");
+        if(states.includes("cross")){
+          attempts += 1;
+          streak = 0;
+        } else if(states.every(s => s === "check")){
+          streak += 1;
+          best = Math.max(best, streak);
+          if(streak % 40 === 0){ completions += 1; }
+        }
+      }
+    }
+    return { streak, attempts, best, completions };
+  }
+
+  function updateCompletionBadge(completions){
+    const badge = document.getElementById('completionBadge');
+    badge.textContent = toBn(completions);
+    badge.style.display = 'flex';
+    const navBadge = document.getElementById('navCompletionBadge');
+    if(navBadge){ navBadge.textContent = toBn(completions); }
+  }
+
+  function updateAttemptBadge(attempts){
+    const badge = document.getElementById('attemptBadge');
+    badge.textContent = toBn(attempts);
+  }
+
+  function updateBestStreakBadge(best){
+    const badge = document.getElementById('bestStreakBadge');
+    badge.textContent = toBn(Math.min(best, 40));
+  }
+
+  function renderCounter(){
+    const { streak, attempts, best, completions } = computeProgress();
+    const shown = Math.min(streak, 40);
+    document.getElementById('ringNum').textContent = toBn(shown) + "/৪০";
+    document.getElementById('trackFill').style.width = (shown / 40 * 100) + "%";
+    document.getElementById('bestStreak').textContent = toBn(Math.min(best, 40)) + " দিন";
+    updateCompletionBadge(completions);
+    updateAttemptBadge(attempts);
+    updateBestStreakBadge(best);
+
+    const card = document.getElementById('counterCard');
+    const attemptLabel = document.getElementById('attemptLabel');
+    if(streak >= 40){
+      card.classList.add('complete');
+      attemptLabel.textContent = "মাশাআল্লাহ! ৪০ দিন সম্পন্ন 🌙";
+    } else {
+      card.classList.remove('complete');
+      attemptLabel.textContent = ordinalBn(attempts) + " প্রচেষ্টা";
+    }
+  }
+
+  function render(){
+    const startDay = (currentWeek - 1) * 7 + 1;
+    const endDay = startDay + 6;
+    document.getElementById('rangeLabel').textContent =
+      "সপ্তাহ " + toBn(currentWeek) + " · দিন " + toBn(startDay) + "–" + toBn(endDay);
+    const data = loadWeekData(currentWeek);
+    renderTable(data);
+    renderCounter();
+  }
+
+  function renderTable(data){
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = "";
+    dayNames.forEach((dayName, dIdx) => {
+      const tr = document.createElement('tr');
+      const nameTd = document.createElement('td');
+      nameTd.className = "day-name";
+      nameTd.textContent = dayName;
+      tr.appendChild(nameTd);
+
+      prayers.forEach(prayer => {
+        const td = document.createElement('td');
+        const dot = document.createElement('div');
+        dot.className = "dot";
+        const key = dIdx + "_" + prayer.key;
+        const state = data[key] || "";
+        applyDotState(dot, state);
+        dot.onclick = () => {
+          const newState = cycleState(data[key] || "");
+          data[key] = newState;
+          applyDotState(dot, newState);
+          saveWeekData(currentWeek, data);
+          renderCounter();
+        };
+        td.appendChild(dot);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function applyDotState(dot, state){
+    dot.classList.remove("checked","crossed");
+    if(state === "check"){ dot.textContent = "✓"; dot.classList.add("checked"); }
+    else if(state === "cross"){ dot.textContent = "×"; dot.classList.add("crossed"); }
+    else { dot.textContent = ""; }
+  }
+
+  function changeWeek(delta){
+    currentWeek = Math.max(1, currentWeek + delta);
+    storage.setItem('muhasaba_currentWeek', currentWeek);
+    render();
+  }
+
+  function resetWeek(){
+    if(confirm("এই সপ্তাহের সব ডেটা মুছে ফেলতে চান?")){
+      storage.removeItem(storageKey(currentWeek));
+      render();
+      closeDrawer();
+    }
+  }
+
+  // drawer menu toggle
+  const menuBtn = document.getElementById('menuBtn');
+  const drawer = document.getElementById('drawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  function openDrawer(){ drawer.classList.add('open'); drawerOverlay.classList.add('open'); }
+  function closeDrawer(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+  menuBtn.addEventListener('click', openDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  // bottom nav
+  const navHome = document.getElementById('navHome');
+  const navProgress = document.getElementById('navProgress');
+  const navProfile = document.getElementById('navProfile');
+  function setActiveNav(btn){
+    [navHome, navProgress, navProfile].forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  navHome.addEventListener('click', () => {
+    setActiveNav(navHome);
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+  navProgress.addEventListener('click', () => {
+    setActiveNav(navProgress);
+    openProgressModal();
+  });
+  navProfile.addEventListener('click', () => {
+    setActiveNav(navProfile);
+    if(isLoggedIn()){
+      window.scrollTo({top:0, behavior:'smooth'});
+    } else {
+      openLoginModal();
+    }
+  });
+
+  // progress modal (bottom sheet)
+  const progressModal = document.getElementById('progressModal');
+  function openProgressModal(){
+    const { streak, attempts, best, completions } = computeProgress();
+    document.getElementById('currentDays').textContent = toBn(Math.min(streak, 40)) + '/৪০';
+    document.getElementById('bestStreakDisplay').textContent = toBn(Math.min(best, 40)) + ' দিন';
+    document.getElementById('attemptNumber').textContent = toBn(attempts);
+    document.getElementById('completionCount').textContent = toBn(completions) + ' বার';
+    progressModal.classList.add('open');
+  }
+  function closeProgressModal(){
+    progressModal.classList.remove('open');
+    setActiveNav(navHome);
+  }
+  progressModal.addEventListener('click', (e) => { if(e.target === progressModal) closeProgressModal(); });
+
+  // login modal (bottom sheet)
+  const loginModal = document.getElementById('loginModal');
+  const nameInput = document.getElementById('nameInput');
+  const loginInput = document.getElementById('loginInput');
+  const errorMsg = document.getElementById('errorMsg');
+  const userInfo = document.getElementById('userInfo');
+  const userName = document.getElementById('userName');
+  const dashboardSection = document.getElementById('dashboardSection');
+  const dashboardGreeting = document.getElementById('dashboardGreeting');
+  const loginBtn = document.getElementById('loginBtn');
+  const menuLogoutBtn = document.getElementById('menuLogoutBtn');
+
+  function isLoggedIn(){
+    return storage.getItem('muhasaba_user') !== null;
+  }
+
+  function getCurrentUser(){
+    const user = storage.getItem('muhasaba_user');
+    return user ? JSON.parse(user) : null;
+  }
+
+  function isDashboardHidden(){
+    return storage.getItem('muhasaba_dashboardHidden') === 'true';
+  }
+
+  function hideDashboard(){
+    storage.setItem('muhasaba_dashboardHidden', 'true');
+    dashboardSection.classList.remove('show');
+    document.getElementById('showDashboardBtn').style.display = 'block';
+  }
+
+  function showDashboard(){
+    storage.setItem('muhasaba_dashboardHidden', 'false');
+    if(isLoggedIn()){
+      dashboardSection.classList.add('show');
+      document.getElementById('showDashboardBtn').style.display = 'none';
+    }
+  }
+
+  function updateUIByLoginStatus(){
+    if(isLoggedIn()){
+      const user = getCurrentUser();
+      userName.textContent = user.name;
+      userInfo.classList.add('show');
+      loginBtn.style.display = 'none';
+      menuLogoutBtn.style.display = 'flex';
+      if(!isDashboardHidden()){
+        dashboardSection.classList.add('show');
+      } else {
+        dashboardSection.classList.remove('show');
+      }
+      document.getElementById('showDashboardBtn').style.display = isDashboardHidden() ? 'flex' : 'none';
+      dashboardGreeting.textContent = 'সালাম, ' + user.name + '! 👋';
+    } else {
+      userInfo.classList.remove('show');
+      loginBtn.style.display = 'flex';
+      menuLogoutBtn.style.display = 'none';
+      document.getElementById('showDashboardBtn').style.display = 'none';
+      dashboardSection.classList.remove('show');
+    }
+  }
+
+  function openLoginModal(){
+    loginModal.classList.add('open');
+    errorMsg.textContent = '';
+    nameInput.value = '';
+    loginInput.value = '';
+    setTimeout(() => nameInput.focus(), 200);
+  }
+
+  loginBtn.addEventListener('click', openLoginModal);
+  loginModal.addEventListener('click', (e) => { if(e.target === loginModal) closeLoginModal(); });
+
+  function handleLogout(){
+    if(confirm('আপনি কি লগআউট করতে চান?')){
+      storage.removeItem('muhasaba_user');
+      updateUIByLoginStatus();
+      closeDrawer();
+      alert('আপনি লগআউট করেছেন');
+    }
+  }
+
+  function closeLoginModal(){
+    loginModal.classList.remove('open');
+    setActiveNav(navHome);
+  }
+
+  function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function isValidPhone(phone){
+    return /^[০-৯0-9]{10,15}$/.test(phone.replace(/[\s-]/g, ''));
+  }
+
+  function submitLogin(){
+    const name = nameInput.value.trim();
+    const input = loginInput.value.trim();
+
+    if(!name){
+      errorMsg.textContent = 'নাম প্রবেশ করুন';
+      return;
+    }
+    if(!input){
+      errorMsg.textContent = 'ইমেইল বা মোবাইল নাম্বার প্রবেশ করুন';
+      return;
+    }
+    if(isValidEmail(input) || isValidPhone(input)){
+      storage.setItem('muhasaba_user', JSON.stringify({name: name, contact: input}));
+      alert('সালাম ' + name + '! আপনি সফলভাবে লগইন করেছেন');
+      closeLoginModal();
+      updateUIByLoginStatus();
+    } else {
+      errorMsg.textContent = 'সঠিক ইমেইল বা মোবাইল নাম্বার দিন';
+    }
+  }
+
+  loginInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') submitLogin();
+  });
+
+  // Check login status on page load
+  updateUIByLoginStatus();
+  render();
+
+  // Register the service worker for offline support (required for PWABuilder/APK)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((err) => {
+        console.warn('Service worker registration failed:', err);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

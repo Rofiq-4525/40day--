@@ -1,0 +1,39 @@
+{
+  "name": "40day — তাকবীরে ঊলা ট্র্যাকার",
+  "short_name": "40day",
+  "description": "৪০ দিনের তাকবীরে ঊলা ট্র্যাকার — জামাআতে প্রথম তাকবীর পাওয়ার হিসাব রাখুন",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F4EF",
+  "theme_color": "#146450",
+  "lang": "bn",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
