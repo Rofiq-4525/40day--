@@ -489,7 +489,7 @@
     <!-- Hadith Dropdown -->
     <div class="hadith-box" id="hadithBox">
       <div class="hadith-toggle" onclick="toggleHadith()">
-        <span>হাদিস</span>
+        <span>তাকবিরে উলার হাদিস দেখুন</span>
         <svg class="hadith-chevron" id="hadithChevron" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="hadith-content" id="hadithContent">
@@ -702,11 +702,25 @@
     window.firebaseApi.pushLeaderboard(cloudUser.uid, { name, attempts, best, completions, streak });
   }
 
+  // FIXED: merge remote data instead of blindly overwriting.
+  // Local non-empty values always win to prevent race-condition data loss.
   function applyRemoteUserData(data){
     if(!data || !data.weeks) return;
     applyingRemoteUpdate = true;
     Object.keys(data.weeks).forEach(w => {
-      storage.setItem(storageKey(w), JSON.stringify(data.weeks[w]));
+      const localRaw = storage.getItem(storageKey(w));
+      const localWeek = localRaw ? JSON.parse(localRaw) : {};
+      const remoteWeek = data.weeks[w];
+      
+      // Merge: remote fills gaps, but local overrides (local is newer/truth)
+      const merged = { ...remoteWeek };
+      Object.keys(localWeek).forEach(key => {
+        if(localWeek[key]) {
+          merged[key] = localWeek[key];
+        }
+      });
+      
+      storage.setItem(storageKey(w), JSON.stringify(merged));
     });
     applyingRemoteUpdate = false;
     render();
@@ -725,14 +739,12 @@
       container.innerHTML = '<div class="leaderboard-empty">এখনো কেউ নেই</div>';
       return;
     }
-    // === CHANGED: sort by best (highest streak) instead of attempts ===
     const sorted = [...list].sort((a, b) => (b.best || 0) - (a.best || 0));
     container.innerHTML = sorted.map((entry, idx) => {
       const isMe = cloudUser && entry.uid === cloudUser.uid;
       return '<div class="leaderboard-row' + (isMe ? ' me' : '') + '">' +
         '<span class="lb-rank">' + toBn(idx + 1) + '</span>' +
         '<span class="lb-name">' + escapeHtml(entry.name || 'নাম নেই') + '</span>' +
-        // === CHANGED: show best streak days instead of attempts ===
         '<span class="lb-score">' + toBn(entry.best || 0) + ' দিন</span>' +
         '</div>';
     }).join('');
