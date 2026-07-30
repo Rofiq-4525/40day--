@@ -104,14 +104,14 @@
    border:2px solid var(--surface);
  }
 
- .content{ padding:16px 14px 16px; }
+ .content{ padding:16px 14px 80px; }
 
  /* Hadith box (dropdown) */
  .hadith-box{
    background:var(--surface);
    border:1px solid var(--line);
    border-radius:var(--radius);
-   margin-bottom:16px;
+   margin-bottom:0;
    font-size:0.85rem;
    color:var(--ink);
    line-height:1.65;
@@ -392,20 +392,6 @@
  .progress-close-btn{ width:100%; padding:13px; background:var(--teal); color:white; border:none; border-radius:14px; font-weight:700; cursor:pointer; margin-top:8px; transition:background .15s ease, transform .1s ease; font-family:'Noto Sans Bengali', sans-serif; }
  .progress-close-btn:active{ background:var(--teal-deep); transform:scale(0.97); }
 
- /* Footer */
- footer{
-   border-top:1px solid var(--line);
-   margin-top:8px;
-   padding:20px 20px 26px;
-   margin-bottom: calc(70px + var(--sab));
- }
- .foot-links{ display:flex; justify-content:space-between; margin-bottom:14px; }
- .foot-col{ display:flex; flex-direction:column; gap:6px; }
- .foot-col.right{ text-align:right; }
- .foot-col a{ color:var(--ink-soft); font-size:0.82rem; text-decoration:underline; }
- .foot-tag{ text-align:center; font-size:0.8rem; color:var(--teal-deep); font-weight:600; letter-spacing:0.02em; }
- .foot-tag .reg{ font-size:0.6rem; vertical-align:super; }
-
  /* User Info & Dashboard */
  .user-info{ display:none; flex:1; text-align:center; padding:0 10px; }
  .user-info.show{ display:block; }
@@ -498,21 +484,6 @@
        <div class="ref-src">সুনান আত-তিরমিযী: ২৪১; মুসনাদ আহমাদ: ১২৬০৯</div>
      </div>
    </div>
-
-   <!-- Footer -->
-   <footer>
-     <div class="foot-links">
-       <div class="foot-col">
-         <a href="#">গোপনীয়তা নীতি</a>
-         <a href="#">যোগাযোগ</a>
-       </div>
-       <div class="foot-col right">
-         <a href="#">সাহায্য</a>
-         <a href="#">আমাদের সম্পর্কে</a>
-       </div>
-     </div>
-     <div class="foot-tag">40day <span class="reg">®</span> তাকবীরে ঊলা ট্র্যাকার</div>
-   </footer>
 
  </div>
 
