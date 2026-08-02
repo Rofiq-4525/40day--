@@ -541,7 +541,7 @@
        </div>
      </div>
      <div class="leaderboard-section">
-       <div class="leaderboard-title">লিডারবোর্ড — সর্বোচ্চ ধারাবাহিকতা অনুযায়ী</div>
+       <div class="leaderboard-title">লিডারবোর্ড — সর্বশেষ একতানা অনুযায়ী</div>
        <div id="leaderboardList" class="leaderboard-list">
          <div class="leaderboard-empty">লগইন করলে লিডারবোর্ড দেখা যাবে</div>
        </div>
@@ -644,9 +644,10 @@
  }
 
  // ─────────────────────────────────────────────────────────────
- // FIXED computeProgress():
- // সর্বশেষ দিনে আংশিক চেক থাকলেও (কোনো cross না থাকলে) সেটাকে
- // ধারাবাহিকতায় গণ্য করা হবে, যাতে লিডারবোর্ডে সর্বশেষ দিনসহ best আসে।
+ // computeProgress():
+ // streak   = বর্তমান চলমান একতানা (current streak)
+ // best     = ইতিহাসে সর্বোচ্চ একতানা (best streak ever)
+ // completions = কতবার ৪০ দিন পূর্ণ হয়েছে
  // ─────────────────────────────────────────────────────────────
  function computeProgress(){
    const maxWeek = getMaxStoredWeek();
@@ -682,8 +683,7 @@
          if(streak % 40 === 0){ completions += 1; }
        } else if(isLastDay && states.some(s => s === "check")){
          // সর্বশেষ দিন: কিছু চেক আছে, কিন্তু সব নয় + কোনো cross নেই।
-         // এটাকেও ধারাবাহিকতায় যোগ করা হলো, যাতে লিডারবোর্ডে
-         // সর্বশেষ দিনের অগ্রগতি সহ দেখায়।
+         // এটাকেও ধারাবাহিকতায় যোগ করা হলো।
          streak += 1;
          best = Math.max(best, streak);
        }
@@ -711,7 +711,8 @@
    const { attempts, best, completions, streak } = computeProgress();
    const name = cloudUser.displayName || (cloudUser.email ? cloudUser.email.split('@')[0] : 'ব্যবহারকারী');
    window.firebaseApi.pushUserData(cloudUser.uid, { name, weeks });
-   window.firebaseApi.pushLeaderboard(cloudUser.uid, { name, attempts, best, completions, streak });
+   // ── FIXED: লিডারবোর্ডে এখন currentStreak পাঠানো হচ্ছে ──
+   window.firebaseApi.pushLeaderboard(cloudUser.uid, { name, attempts, best, completions, streak, currentStreak: streak });
  }
 
  // FIXED: merge remote data instead of blindly overwriting.
@@ -744,6 +745,7 @@
    return div.innerHTML;
  }
 
+ // ── FIXED: লিডারবোর্ড সর্ট এবং ডিসপ্লে এখন currentStreak অনুযায়ী ──
  function renderLeaderboard(list){
    const container = document.getElementById('leaderboardList');
    if(!container) return;
@@ -751,13 +753,19 @@
      container.innerHTML = '<div class="leaderboard-empty">এখনো কেউ নেই</div>';
      return;
    }
-   const sorted = [...list].sort((a, b) => (b.best || 0) - (a.best || 0));
+   // র‌্যাঙ্কিং: currentStreak আছে কিনা চেক, না থাকলে best fallback
+   const sorted = [...list].sort((a, b) => {
+     const aScore = (a.currentStreak !== undefined ? a.currentStreak : a.best) || 0;
+     const bScore = (b.currentStreak !== undefined ? b.currentStreak : b.best) || 0;
+     return bScore - aScore;
+   });
    container.innerHTML = sorted.map((entry, idx) => {
      const isMe = cloudUser && entry.uid === cloudUser.uid;
+     const score = (entry.currentStreak !== undefined ? entry.currentStreak : entry.best) || 0;
      return '<div class="leaderboard-row' + (isMe ? ' me' : '') + '">' +
        '<span class="lb-rank">' + toBn(idx + 1) + '</span>' +
        '<span class="lb-name">' + escapeHtml(entry.name || 'নাম নেই') + '</span>' +
-       '<span class="lb-score">' + toBn(entry.best || 0) + ' দিন</span>' +
+       '<span class="lb-score">' + toBn(score) + ' দিন</span>' +
        '</div>';
    }).join('');
  }
@@ -1126,78 +1134,4 @@
  });
 
  // Initial render (guest/local view). Firebase auth state (if configured)
- // will call handleAuthChange once the module script below is ready.
- updateUIByLoginStatus();
- render();
-</script>
-
-<script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
- import {
-   getAuth, GoogleAuthProvider, signInWithPopup,
-   signInWithEmailAndPassword, createUserWithEmailAndPassword,
-   updateProfile, signOut, onAuthStateChanged
- } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
- import {
-   getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp
- } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-
- const firebaseConfig = {
-   apiKey: "AIzaSyB4A894MeIadU_xM-CIMKqMwjqCYZIuD8Q",
-   authDomain: "day-9c133.firebaseapp.com",
-   projectId: "day-9c133",
-   storageBucket: "day-9c133.firebasestorage.app",
-   messagingSenderId: "805399331787",
-   appId: "1:805399331787:web:8454840aa3230beaacac4e"
- };
-
- try {
-   const app = initializeApp(firebaseConfig);
-   const auth = getAuth(app);
-   const db = getFirestore(app);
-
-   let unsubUser = null;
-   let unsubBoard = null;
-
-   window.firebaseApi = {
-     onAuthChange(cb){ onAuthStateChanged(auth, cb); },
-     signInGoogle(){ return signInWithPopup(auth, new GoogleAuthProvider()); },
-     signInEmail(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
-     async signUpEmail(email, pass, name){
-       const cred = await createUserWithEmailAndPassword(auth, email, pass);
-       if(name) await updateProfile(cred.user, { displayName: name });
-       return cred;
-     },
-     signOutUser(){ return signOut(auth); },
-     pushUserData(uid, payload){
-       return setDoc(doc(db, 'users', uid), Object.assign({}, payload, { updatedAt: serverTimestamp() }), { merge: true });
-     },
-     pushLeaderboard(uid, payload){
-       return setDoc(doc(db, 'leaderboard', uid), Object.assign({}, payload, { updatedAt: serverTimestamp() }), { merge: true });
-     },
-     subscribeUserDoc(uid, cb){
-       if(unsubUser) unsubUser();
-       unsubUser = onSnapshot(doc(db, 'users', uid), (snap) => cb(snap.exists() ? snap.data() : null));
-     },
-     subscribeLeaderboard(cb){
-       if(unsubBoard) unsubBoard();
-       unsubBoard = onSnapshot(collection(db, 'leaderboard'), (snap) => {
-         const list = [];
-         snap.forEach((d) => list.push(Object.assign({ uid: d.id }, d.data())));
-         cb(list);
-       });
-     },
-     unsubscribeAll(){
-       if(unsubUser){ unsubUser(); unsubUser = null; }
-       if(unsubBoard){ unsubBoard(); unsubBoard = null; }
-     }
-   };
-
-   window.dispatchEvent(new Event('firebase-ready'));
- } catch (e) {
-   console.error('Firebase init failed, continuing in guest/local mode.', e);
- }
-</script>
-
-</body>
-</html>
+ // will call handleAuthChange once the module script
