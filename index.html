@@ -514,6 +514,7 @@
      <button class="drawer-btn" onclick="resetWeek()"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 2.6 6.3"/><polyline points="3 17 3 12 8 12"/></svg></span>এই সপ্তাহ রিসেট করুন</button>
      <button class="drawer-btn" id="showDashboardBtn" onclick="showDashboard(); closeDrawer();" style="display:none;"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>সালাম দেখান</button>
      <button class="drawer-btn danger" id="menuLogoutBtn" onclick="handleLogout()" style="display:none;"><span class="di"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>লগআউট</button>
+     <button class="drawer-btn danger" id="menuDeleteBtn" onclick="handleDeleteAccount()" style="display:none;"><span class="di"><svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span>অ্যাকাউন্ট ডিলিট করুন</button>
    </div>
  </div>
 
@@ -953,6 +954,7 @@
  const dashboardGreeting = document.getElementById('dashboardGreeting');
  const loginBtn = document.getElementById('loginBtn');
  const menuLogoutBtn = document.getElementById('menuLogoutBtn');
+const menuDeleteBtn = document.getElementById('menuDeleteBtn');
  let isSignupMode = false;
 
  function isLoggedIn(){
@@ -989,6 +991,7 @@
      userInfo.classList.add('show');
      loginBtn.style.display = 'none';
      menuLogoutBtn.style.display = 'flex';
+     menuDeleteBtn.style.display = 'flex';
      if(!isDashboardHidden()){
        dashboardSection.classList.add('show');
      } else {
@@ -1000,6 +1003,7 @@
      userInfo.classList.remove('show');
      loginBtn.style.display = 'flex';
      menuLogoutBtn.style.display = 'none';
+     menuDeleteBtn.style.display = 'none';
      document.getElementById('showDashboardBtn').style.display = 'none';
      dashboardSection.classList.remove('show');
    }
@@ -1031,6 +1035,27 @@
        updateUIByLoginStatus();
      }
      closeDrawer();
+   }
+ }
+
+ async function handleDeleteAccount(){
+   if(!cloudUser || !window.firebaseApi){ return; }
+   const sure = confirm('আপনার অ্যাকাউন্ট ও সব ডেটা (leaderboard-সহ) স্থায়ীভাবে ডিলিট হয়ে যাবে। এটা ফেরানো যাবে না। আপনি কি নিশ্চিত?');
+   if(!sure) return;
+
+   try {
+     await window.firebaseApi.deleteAccount(cloudUser.uid);
+     // deleteAccount also signs the user out (Firebase Auth does this
+     // automatically once the account is removed), which triggers
+     // handleAuthChange(null) and updates the UI back to guest mode.
+     closeDrawer();
+     alert('আপনার অ্যাকাউন্ট ডিলিট হয়ে গেছে।');
+   } catch(e){
+     if(e && e.code === 'auth/requires-recent-login'){
+       alert('নিরাপত্তার জন্য অ্যাকাউন্ট ডিলিট করার আগে আবার লগইন করতে হবে। লগআউট করে আবার লগইন করে চেষ্টা করুন।');
+     } else {
+       alert(translateFirebaseError(e && e.code));
+     }
    }
  }
 
@@ -1115,10 +1140,10 @@
  import {
    getAuth, GoogleAuthProvider, signInWithPopup,
    signInWithEmailAndPassword, createUserWithEmailAndPassword,
-   updateProfile, signOut, onAuthStateChanged
+   updateProfile, signOut, deleteUser, onAuthStateChanged
  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
  import {
-   getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp
+   getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, serverTimestamp
  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
  const firebaseConfig = {
@@ -1148,6 +1173,17 @@
        return cred;
      },
      signOutUser(){ return signOut(auth); },
+     async deleteAccount(uid){
+       // Order matters: remove the Firestore docs first (while the user is
+       // still authenticated, since Firestore rules typically require
+       // request.auth.uid === uid to allow the delete), then remove the
+       // Auth account itself last.
+       await deleteDoc(doc(db, 'leaderboard', uid));
+       await deleteDoc(doc(db, 'users', uid));
+       if(auth.currentUser){
+         await deleteUser(auth.currentUser);
+       }
+     },
      pushUserData(uid, payload){
        return setDoc(doc(db, 'users', uid), Object.assign({}, payload, { updatedAt: serverTimestamp() }), { merge: true });
      },
