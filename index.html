@@ -541,7 +541,7 @@
        </div>
      </div>
      <div class="leaderboard-section">
-       <div class="leaderboard-title">লিডারবোর্ড — সর্বোচ্চ ধারাবাহিকতা অনুযায়ী</div>
+       <div class="leaderboard-title">লিডারবোর্ড — চলমান ধারাবাহিকতা অনুযায়ী</div>
        <div id="leaderboardList" class="leaderboard-list">
          <div class="leaderboard-empty">লগইন করলে লিডারবোর্ড দেখা যাবে</div>
        </div>
@@ -726,13 +726,17 @@
      container.innerHTML = '<div class="leaderboard-empty">এখনো কেউ নেই</div>';
      return;
    }
-   const sorted = [...list].sort((a, b) => (b.best || 0) - (a.best || 0));
+   // Ranking is based on the CURRENT streak — how many days in a row are
+   // checked counting back from the most recent day — not the historical
+   // best-ever streak. A broken-then-abandoned old streak should not
+   // outrank someone who is actively continuing today.
+   const sorted = [...list].sort((a, b) => (b.streak || 0) - (a.streak || 0));
    container.innerHTML = sorted.map((entry, idx) => {
      const isMe = cloudUser && entry.uid === cloudUser.uid;
      return '<div class="leaderboard-row' + (isMe ? ' me' : '') + '">' +
        '<span class="lb-rank">' + toBn(idx + 1) + '</span>' +
        '<span class="lb-name">' + escapeHtml(entry.name || 'নাম নেই') + '</span>' +
-       '<span class="lb-score">' + toBn(entry.best || 0) + ' দিন</span>' +
+       '<span class="lb-score">' + toBn(entry.streak || 0) + ' দিন</span>' +
        '</div>';
    }).join('');
  }
